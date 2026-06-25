@@ -94,7 +94,7 @@ Write 3-5 resume bullet points about this project. Each one should:
 Format using bullet points (•). Do not use markdown, asterisks, or bold text.
 """
     response = _get_client().models.generate_content(model="gemini-2.5-flash", contents=prompt)
-    return response.text.strip().replace("**", "")
+    return response.text.strip().replace("**", "").replace("*", "")
 
 
 # prints all three AI outputs in a clean readable format
