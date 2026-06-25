@@ -22,6 +22,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install ruff
+        run: pip install ruff
+
       - name: Run ruff style check
         run: ruff check .
 
