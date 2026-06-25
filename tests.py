@@ -6,7 +6,6 @@ from genai_client import (
     build_repo_summary,
     generate_nontechnical_explanation,
     generate_interview_talking_points,
-    generate_resume_bullets,
     display_results,
     analyze_repo,
 )
