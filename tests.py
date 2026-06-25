@@ -1,5 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
+from github_client import parse_github_url
+from database import init_db, save_repo, get_repo, update_analysis
 from genai_client import (
     build_repo_summary,
     generate_nontechnical_explanation,
@@ -8,6 +10,95 @@ from genai_client import (
     display_results,
     analyze_repo,
 )
+
+SAMPLE_DB_REPO = {
+    "owner": "octocat",
+    "name": "Hello-World",
+    "description": "My first repo",
+    "language": "Python",
+    "stars": 10,
+    "readme": "This is the readme.",
+}
+
+
+class TestParseGithubUrl(unittest.TestCase):
+
+    # checks that a valid github url returns the correct owner and repo
+    def test_valid_url(self):
+        owner, repo = parse_github_url("https://github.com/octocat/Hello-World")
+        self.assertEqual(owner, "octocat")
+        self.assertEqual(repo, "Hello-World")
+
+    # checks that a trailing slash is handled correctly
+    def test_trailing_slash(self):
+        owner, repo = parse_github_url("https://github.com/octocat/Hello-World/")
+        self.assertEqual(owner, "octocat")
+        self.assertEqual(repo, "Hello-World")
+
+    # checks that an invalid url raises a ValueError
+    def test_invalid_url_raises(self):
+        with self.assertRaises(ValueError):
+            parse_github_url("https://notgithub.com/octocat/Hello-World")
+
+
+class TestGetRepoInfo(unittest.TestCase):
+
+    # checks that get_repo_info correctly extracts fields from a mocked api response
+    @patch("github_client.requests.get")
+    def test_extracts_fields_from_response(self, mock_get):
+        mock_get.return_value = MagicMock(status_code=200, json=lambda: {
+            "name": "Hello-World",
+            "owner": {"login": "octocat"},
+            "description": "My first repo",
+            "language": "Python",
+            "stargazers_count": 10,
+        })
+        from github_client import get_repo_info
+        result = get_repo_info("octocat", "Hello-World")
+        self.assertEqual(result["name"], "Hello-World")
+        self.assertEqual(result["owner"], "octocat")
+        self.assertEqual(result["stars"], 10)
+
+    # checks that get_readme decodes base64 content to plain text
+    @patch("github_client.requests.get")
+    def test_readme_decoded_from_base64(self, mock_get):
+        import base64
+        encoded = base64.b64encode(b"Hello README").decode("utf-8")
+        mock_get.return_value = MagicMock(status_code=200, json=lambda: {"content": encoded})
+        from github_client import get_readme
+        result = get_readme("octocat", "Hello-World")
+        self.assertEqual(result, "Hello README")
+
+
+class TestDatabase(unittest.TestCase):
+
+    # points the database to a temp file and creates the table before each test
+    def setUp(self):
+        import database
+        database.DB_NAME = "test_repos.db"
+        init_db()
+
+    # deletes the temp database file after each test
+    def tearDown(self):
+        import os
+        if os.path.exists("test_repos.db"):
+            os.remove("test_repos.db")
+
+    # checks that a saved repo can be retrieved with the same data
+    def test_save_and_get_repo(self):
+        save_repo(SAMPLE_DB_REPO)
+        result = get_repo("octocat", "Hello-World")
+        self.assertIsNotNone(result)
+        self.assertEqual(result["name"], "Hello-World")
+        self.assertEqual(result["stars"], 10)
+
+    # checks that update_analysis changes only the analysis field
+    def test_update_analysis(self):
+        save_repo(SAMPLE_DB_REPO)
+        update_analysis("octocat", "Hello-World", "Great project!")
+        result = get_repo("octocat", "Hello-World")
+        self.assertEqual(result["analysis"], "Great project!")
+
 
 # sample repo data used across multiple tests
 SAMPLE_REPO = {
