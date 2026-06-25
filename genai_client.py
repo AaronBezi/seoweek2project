@@ -4,7 +4,11 @@ from dotenv import load_dotenv
 
 # Load the API key from the .env file
 load_dotenv()
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+
+def _get_client():
+    api_key = os.getenv("GEMINI_API_KEY")
+    return genai.Client(api_key=api_key)
 
 
 # turns repo data into plain text so the AI can read it
@@ -42,7 +46,7 @@ Write 2-3 short paragraphs explaining:
 
 Write simply, like explaining to a curious 12-year-old.
 """
-    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+    response = _get_client().models.generate_content(model="gemini-2.5-flash", contents=prompt)
     return response.text.strip()
 
 
@@ -63,7 +67,7 @@ Write 5 interview talking points about this project. Each one should:
 
 Format as a numbered list.
 """
-    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+    response = _get_client().models.generate_content(model="gemini-2.5-flash", contents=prompt)
     return response.text.strip()
 
 
@@ -85,7 +89,7 @@ Write 3-5 resume bullet points about this project. Each one should:
 
 Format using bullet points (•). Do not use markdown, asterisks, or bold text.
 """
-    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+    response = _get_client().models.generate_content(model="gemini-2.5-flash", contents=prompt)
     return response.text.strip().replace("**", "")
 
 

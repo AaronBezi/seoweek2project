@@ -138,16 +138,16 @@ class TestBuildRepoSummary(unittest.TestCase):
 class TestGenerateFunctions(unittest.TestCase):
 
     # checks that generate_nontechnical_explanation returns the AI's response text
-    @patch("genai_client.client")
-    def test_nontechnical_explanation_returns_text(self, mock_client):
-        mock_client.models.generate_content.return_value = MagicMock(text="  Plain English explanation.  ")
+    @patch("genai_client._get_client")
+    def test_nontechnical_explanation_returns_text(self, mock_get_client):
+        mock_get_client.return_value.models.generate_content.return_value = MagicMock(text="  Plain English explanation.  ")
         result = generate_nontechnical_explanation(SAMPLE_REPO)
         self.assertEqual(result, "Plain English explanation.")
 
     # checks that generate_interview_talking_points returns the AI's response text
-    @patch("genai_client.client")
-    def test_interview_talking_points_returns_text(self, mock_client):
-        mock_client.models.generate_content.return_value = MagicMock(text="1. Talking point one.")
+    @patch("genai_client._get_client")
+    def test_interview_talking_points_returns_text(self, mock_get_client):
+        mock_get_client.return_value.models.generate_content.return_value = MagicMock(text="1. Talking point one.")
         result = generate_interview_talking_points(SAMPLE_REPO)
         self.assertEqual(result, "1. Talking point one.")
 
