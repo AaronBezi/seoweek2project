@@ -5,10 +5,14 @@ from dotenv import load_dotenv
 # Load the API key from the .env file
 load_dotenv()
 
+_client = None
+
 
 def _get_client():
-    api_key = os.getenv("GEMINI_API_KEY")
-    return genai.Client(api_key=api_key)
+    global _client
+    if _client is None:
+        _client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    return _client
 
 
 # turns repo data into plain text so the AI can read it
